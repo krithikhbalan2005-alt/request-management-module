@@ -174,7 +174,15 @@ export default function Dashboard() {
             key={item.id}
             className="border p-3 rounded mb-3 flex justify-between items-center"
           >
-            <span>{item.request}</span>
+            <div>
+  <p className="font-medium">{item.request}</p>
+
+  <p className="text-sm text-gray-500">
+    {item.createdAt?.toDate
+      ? item.createdAt.toDate().toLocaleString()
+      : "No Date"}
+  </p>
+</div>
 
             <div className="flex gap-2">
               <button
