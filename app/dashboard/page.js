@@ -54,13 +54,14 @@ const [topics, setTopics] = useState("");
   alert("Please fill all fields");
   return;
 }
-    }
-
+   
     try {
       if (editId) {
         await updateDoc(doc(db, "requests", editId), {
-          request: request.trim(),
-        });
+          title: title.trim(),
+  description: description.trim(),
+  topics: topics.trim(),
+});
 
         alert("Request Updated Successfully");
         setEditId(null);
@@ -69,6 +70,7 @@ const [topics, setTopics] = useState("");
           title: title.trim(),
           description: description.trim(),
           topics: topics.trim(),
+          published: false,
           createdAt: new Date(),
         });
 
@@ -86,12 +88,16 @@ setTopics("");
   };
 
   const handleEdit = (item) => {
-    setRequest(item.request);
-    setEditId(item.id);
-  };
+     setTitle(item.title || "");
+  setDescription(item.description || "");
+  setTopics(item.topics || "");
+  setEditId(item.id);
+};
 
   const handleCancelEdit = () => {
-    setRequest("");
+    setTitle("");
+    setDescription("");
+    setTopics("");
     setEditId(null);
   };
 
@@ -113,6 +119,7 @@ setTopics("");
       alert(error.message);
     }
   };
+  
 
   const handleLogout = async () => {
     try {
@@ -123,6 +130,23 @@ setTopics("");
       alert("Logout failed: " + error.message);
     }
   };
+  
+  const handlePublish = async (id) => {
+try {
+await updateDoc(doc(db, "requests", id), {
+published: true,
+});
+
+alert("Request Published Successfully");
+fetchRequests();
+
+alert("Request Published Successfully");
+fetchRequests();
+
+} catch (error) {
+alert(error.message);
+}
+};
 
   return (
     <div className="p-6 max-w-3xl mx-auto">
@@ -237,3 +261,4 @@ setTopics("");
       )}
     </div>
   );
+}
