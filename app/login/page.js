@@ -6,21 +6,22 @@ import { auth } from "../../lib/firebase";
 import { useRouter } from "next/navigation";
 
 export default function LoginPage() {
+  const router = useRouter();
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const handleLogin = async () => {
-  try {
-    await signInWithEmailAndPassword(
-      auth,
-      email,
-      password
-    );
 
-    alert("Login Successful");
-  } catch (error) {
-    alert(error.message);
-  }
-};
+  const handleLogin = async () => {
+    try {
+      await signInWithEmailAndPassword(auth, email, password);
+
+      alert("Login Successful");
+
+      window.location.href = "/dashboard";
+    } catch (error) {
+      alert(error.message);
+    }
+  };
 
   return (
     <div className="flex min-h-screen items-center justify-center">
@@ -43,12 +44,12 @@ export default function LoginPage() {
           onChange={(e) => setPassword(e.target.value)}
         />
 
-       <button
-  onClick={handleLogin}
-  className="w-full bg-black text-white p-2 rounded"
->
-  Login
-</button>
+        <button
+          onClick={handleLogin}
+          className="w-full bg-black text-white p-2 rounded"
+        >
+          Login
+        </button>
       </div>
     </div>
   );
