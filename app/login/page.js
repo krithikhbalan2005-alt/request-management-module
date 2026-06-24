@@ -49,6 +49,15 @@ location.assign("/dashboard");
         >
           Login
         </button>
+        <p className="text-center mt-4">
+  New User?{" "}
+  <a
+    href="/signup"
+    className="text-blue-500 font-semibold"
+  >
+    Sign Up
+  </a>
+</p>
       </div>
     </div>
   );

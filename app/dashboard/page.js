@@ -15,6 +15,9 @@ import { db, auth } from "../../lib/firebase";
 
 export default function Dashboard() {
   const [request, setRequest] = useState("");
+  const [title, setTitle] = useState("");
+const [description, setDescription] = useState("");
+const [topics, setTopics] = useState("");
   const [requests, setRequests] = useState([]);
   const [editId, setEditId] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -47,9 +50,10 @@ export default function Dashboard() {
   }, [fetchRequests]);
 
   const handleSubmit = async () => {
-    if (!request.trim()) {
-      alert("Enter Request");
-      return;
+    if (!title.trim() || !description.trim() || !topics.trim()) {
+  alert("Please fill all fields");
+  return;
+}
     }
 
     try {
@@ -62,14 +66,18 @@ export default function Dashboard() {
         setEditId(null);
       } else {
         await addDoc(collection(db, "requests"), {
-          request: request.trim(),
+          title: title.trim(),
+          description: description.trim(),
+          topics: topics.trim(),
           createdAt: new Date(),
         });
 
         alert("Request Saved Successfully");
       }
 
-      setRequest("");
+      setTitle("");
+setDescription("");
+setTopics("");
       fetchRequests();
     } catch (error) {
       console.error("Error submitting request:", error);
@@ -132,14 +140,28 @@ export default function Dashboard() {
       </div>
 
       <div className="border p-4 rounded mb-6">
-        <input
-          type="text"
-          placeholder="Enter Request"
-          value={request}
-          onChange={(e) => setRequest(e.target.value)}
-          className="w-full border p-2 mb-3 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-        />
+       <input
+  type="text"
+  placeholder="Enter Title"
+  value={title}
+  onChange={(e) => setTitle(e.target.value)}
+  className="w-full border p-2 mb-3 rounded"
+/>
 
+<textarea
+  placeholder="Enter Description"
+  value={description}
+  onChange={(e) => setDescription(e.target.value)}
+  className="w-full border p-2 mb-3 rounded"
+/>
+
+<input
+  type="text"
+  placeholder="Enter Topics"
+  value={topics}
+  onChange={(e) => setTopics(e.target.value)}
+  className="w-full border p-2 mb-3 rounded"
+/>
         <div className="flex gap-2">
           <button
             onClick={handleSubmit}
@@ -174,8 +196,18 @@ export default function Dashboard() {
             key={item.id}
             className="border p-3 rounded mb-3 flex justify-between items-center"
           >
-            <div>
-  <p className="font-medium">{item.request}</p>
+           <div>
+  <h3 className="font-bold text-lg">
+    {item.title}
+  </h3>
+
+  <p className="text-gray-700">
+    {item.description}
+  </p>
+
+  <p className="text-blue-600">
+    Topic: {item.topics}
+  </p>
 
   <p className="text-sm text-gray-500">
     {item.createdAt?.toDate
@@ -183,6 +215,7 @@ export default function Dashboard() {
       : "No Date"}
   </p>
 </div>
+
 
             <div className="flex gap-2">
               <button
@@ -204,4 +237,3 @@ export default function Dashboard() {
       )}
     </div>
   );
-}
