@@ -1,40 +1,66 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { collection, getDocs } from "firebase/firestore";
+import { db } from "../../lib/firebase";
 
 export default function RequestPage() {
-  const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
+const [requests, setRequests] = useState([]);
 
-  const handleSubmit = () => {
-    alert("Request Submitted");
-  };
+useEffect(() => {
+fetchRequests();
+}, []);
 
-  return (
-    <div className="p-5">
-      <h1 className="text-2xl font-bold mb-4">Create Request</h1>
+const fetchRequests = async () => {
+const querySnapshot = await getDocs(collection(db, "requests"));
 
-      <input
-        type="text"
-        placeholder="Request Title"
-        className="border p-2 w-full mb-3"
-        value={title}
-        onChange={(e) => setTitle(e.target.value)}
-      />
+```
+const data = querySnapshot.docs
+  .map((doc) => ({
+    id: doc.id,
+    ...doc.data(),
+  }))
+  .filter((item) => item.published === true);
 
-      <textarea
-        placeholder="Description"
-        className="border p-2 w-full mb-3"
-        value={description}
-        onChange={(e) => setDescription(e.target.value)}
-      />
+setRequests(data);
+```
 
-      <button
-        onClick={handleSubmit}
-        className="bg-black text-white px-4 py-2 rounded"
+};
+
+return ( <div className="p-6 max-w-4xl mx-auto"> <h1 className="text-3xl font-bold mb-6">
+Public Requests </h1>
+
+```
+  {requests.length === 0 ? (
+    <p>No Published Requests Found</p>
+  ) : (
+    requests.map((item) => (
+      <div
+        key={item.id}
+        className="border p-4 rounded mb-4"
       >
-        Submit Request
-      </button>
-    </div>
-  );
+        <h2 className="text-xl font-bold">
+          {item.title}
+        </h2>
+
+        <p className="mt-2">
+          {item.description}
+        </p>
+
+        <p className="text-blue-600 mt-2">
+          Topic: {item.topics}
+        </p>
+
+        <p className="text-gray-500 text-sm mt-2">
+          {item.createdAt?.toDate
+            ? item.createdAt.toDate().toLocaleString()
+            : "No Date"}
+        </p>
+      </div>
+    ))
+  )}
+</div>
+
+
+);
 }

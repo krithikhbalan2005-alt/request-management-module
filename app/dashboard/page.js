@@ -100,6 +100,20 @@ export default function Dashboard() {
     setEditId(null);
   };
 
+  const handlePublish = async (id) => {
+    try {
+      await updateDoc(doc(db, "requests", id), {
+        published: true,
+      });
+
+      alert("Request Published Successfully");
+      fetchRequests();
+    } catch (error) {
+      console.error("Error publishing request:", error);
+      alert(error.message);
+    }
+  };
+
   const handleDelete = async (id) => {
     try {
       await deleteDoc(doc(db, "requests", id));
@@ -230,6 +244,15 @@ export default function Dashboard() {
               >
                 Edit
               </button>
+
+              {!item.published && (
+                <button
+                  onClick={() => handlePublish(item.id)}
+                  className="bg-green-500 text-white px-3 py-1 rounded hover:bg-green-600 transition"
+                >
+                  Publish
+                </button>
+              )}
 
               <button
                 onClick={() => handleDelete(item.id)}
