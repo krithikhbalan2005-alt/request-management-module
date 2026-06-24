@@ -14,10 +14,9 @@ import { useRouter } from "next/navigation";
 import { db, auth } from "../../lib/firebase";
 
 export default function Dashboard() {
-  const [request, setRequest] = useState("");
   const [title, setTitle] = useState("");
-const [description, setDescription] = useState("");
-const [topics, setTopics] = useState("");
+  const [description, setDescription] = useState("");
+  const [topics, setTopics] = useState("");
   const [requests, setRequests] = useState([]);
   const [editId, setEditId] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -51,17 +50,17 @@ const [topics, setTopics] = useState("");
 
   const handleSubmit = async () => {
     if (!title.trim() || !description.trim() || !topics.trim()) {
-  alert("Please fill all fields");
-  return;
-}
+      alert("Please fill all fields");
+      return;
+    }
    
     try {
       if (editId) {
         await updateDoc(doc(db, "requests", editId), {
           title: title.trim(),
-  description: description.trim(),
-  topics: topics.trim(),
-});
+          description: description.trim(),
+          topics: topics.trim(),
+        });
 
         alert("Request Updated Successfully");
         setEditId(null);
@@ -78,8 +77,8 @@ const [topics, setTopics] = useState("");
       }
 
       setTitle("");
-setDescription("");
-setTopics("");
+      setDescription("");
+      setTopics("");
       fetchRequests();
     } catch (error) {
       console.error("Error submitting request:", error);
@@ -88,11 +87,11 @@ setTopics("");
   };
 
   const handleEdit = (item) => {
-     setTitle(item.title || "");
-  setDescription(item.description || "");
-  setTopics(item.topics || "");
-  setEditId(item.id);
-};
+    setTitle(item.title || "");
+    setDescription(item.description || "");
+    setTopics(item.topics || "");
+    setEditId(item.id);
+  };
 
   const handleCancelEdit = () => {
     setTitle("");
@@ -109,7 +108,9 @@ setTopics("");
 
       // Bug Fix: If the item currently being edited is deleted, reset the edit state.
       if (id === editId) {
-        setRequest("");
+        setTitle("");
+        setDescription("");
+        setTopics("");
         setEditId(null);
       }
 
@@ -119,7 +120,6 @@ setTopics("");
       alert(error.message);
     }
   };
-  
 
   const handleLogout = async () => {
     try {
@@ -130,23 +130,6 @@ setTopics("");
       alert("Logout failed: " + error.message);
     }
   };
-  
-  const handlePublish = async (id) => {
-try {
-await updateDoc(doc(db, "requests", id), {
-published: true,
-});
-
-alert("Request Published Successfully");
-fetchRequests();
-
-alert("Request Published Successfully");
-fetchRequests();
-
-} catch (error) {
-alert(error.message);
-}
-};
 
   return (
     <div className="p-6 max-w-3xl mx-auto">
@@ -164,28 +147,28 @@ alert(error.message);
       </div>
 
       <div className="border p-4 rounded mb-6">
-       <input
-  type="text"
-  placeholder="Enter Title"
-  value={title}
-  onChange={(e) => setTitle(e.target.value)}
-  className="w-full border p-2 mb-3 rounded"
-/>
+        <input
+          type="text"
+          placeholder="Enter Title"
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          className="w-full border p-2 mb-3 rounded"
+        />
 
-<textarea
-  placeholder="Enter Description"
-  value={description}
-  onChange={(e) => setDescription(e.target.value)}
-  className="w-full border p-2 mb-3 rounded"
-/>
+        <textarea
+          placeholder="Enter Description"
+          value={description}
+          onChange={(e) => setDescription(e.target.value)}
+          className="w-full border p-2 mb-3 rounded"
+        />
 
-<input
-  type="text"
-  placeholder="Enter Topics"
-  value={topics}
-  onChange={(e) => setTopics(e.target.value)}
-  className="w-full border p-2 mb-3 rounded"
-/>
+        <input
+          type="text"
+          placeholder="Enter Topics"
+          value={topics}
+          onChange={(e) => setTopics(e.target.value)}
+          className="w-full border p-2 mb-3 rounded"
+        />
         <div className="flex gap-2">
           <button
             onClick={handleSubmit}
@@ -220,26 +203,25 @@ alert(error.message);
             key={item.id}
             className="border p-3 rounded mb-3 flex justify-between items-center"
           >
-           <div>
-  <h3 className="font-bold text-lg">
-    {item.title}
-  </h3>
+            <div>
+              <h3 className="font-bold text-lg">
+                {item.title}
+              </h3>
 
-  <p className="text-gray-700">
-    {item.description}
-  </p>
+              <p className="text-gray-700">
+                {item.description}
+              </p>
 
-  <p className="text-blue-600">
-    Topic: {item.topics}
-  </p>
+              <p className="text-blue-600">
+                Topic: {item.topics}
+              </p>
 
-  <p className="text-sm text-gray-500">
-    {item.createdAt?.toDate
-      ? item.createdAt.toDate().toLocaleString()
-      : "No Date"}
-  </p>
-</div>
-
+              <p className="text-sm text-gray-500">
+                {item.createdAt?.toDate
+                  ? item.createdAt.toDate().toLocaleString()
+                  : "No Date"}
+              </p>
+            </div>
 
             <div className="flex gap-2">
               <button
