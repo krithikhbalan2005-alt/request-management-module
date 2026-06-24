@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useState, useMemo } from "react";
-import { collection, getDocs } from "firebase/firestore";
+// Query மற்றும் where ஆகியவற்றை இறக்குமதி செய்துள்ளோம்
+import { collection, getDocs, query, where } from "firebase/firestore";
 import { db } from "../../lib/firebase";
 
 export default function RequestPage() {
@@ -17,17 +18,19 @@ export default function RequestPage() {
   const fetchRequests = async () => {
     setLoading(true);
     try {
-      const querySnapshot = await getDocs(collection(db, "requests"));
-      const data = querySnapshot.docs
-        .map((doc) => ({
-          id: doc.id,
-          ...doc.data(),
-        }))
-        .filter((item) => item.published === true);
+      // 1. Firestore-ல் இருந்தே நேரடியாக 'published: true' கொண்ட தரவுகளை மட்டும் எடுக்கிறோம் (Optimized Query)
+      const q = query(collection(db, "requests"), where("published", "==", true));
+      const querySnapshot = await getDocs(q);
+      
+      const data = querySnapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      }));
       setRequests(data);
     } catch (error) {
       console.error("Error fetching requests:", error);
     } finally {
+      // 2. எந்த பிழை வந்தாலும் loading நிறுத்தப்படுவதை உறுதி செய்கிறோம்
       setLoading(false);
     }
   };
@@ -62,12 +65,12 @@ export default function RequestPage() {
             .includes(selectedTopic.toLowerCase()));
 
       // 2. Search Filter (title, description, topics)
-      const query = searchQuery.toLowerCase().trim();
+      const queryStr = searchQuery.toLowerCase().trim();
       const matchesSearch =
-        !query ||
-        (item.title && item.title.toLowerCase().includes(query)) ||
-        (item.description && item.description.toLowerCase().includes(query)) ||
-        (item.topics && item.topics.toLowerCase().includes(query));
+        !queryStr ||
+        (item.title && item.title.toLowerCase().includes(queryStr)) ||
+        (item.description && item.description.toLowerCase().includes(queryStr)) ||
+        (item.topics && item.topics.toLowerCase().includes(queryStr));
 
       return matchesTopic && matchesSearch;
     });
