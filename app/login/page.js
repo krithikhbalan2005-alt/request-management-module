@@ -15,9 +15,8 @@ export default function LoginPage() {
     try {
       await signInWithEmailAndPassword(auth, email, password);
 
-      alert("Login Successful");
-
-      window.location.href = "/dashboard";
+      console.log("SUCCESS");
+location.assign("/dashboard");
     } catch (error) {
       alert(error.message);
     }
