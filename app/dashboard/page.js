@@ -152,12 +152,22 @@ export default function Dashboard() {
           Request Management Dashboard
         </h1>
 
-        <button
-          onClick={handleLogout}
-          className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 transition"
-        >
-          Logout
-        </button>
+        <div className="flex gap-2">
+          {/* Put "Public Requests" next to "Logout" with custom green style */}
+          <button
+            onClick={() => router.push("/request")}
+            className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 transition"
+          >
+            Public Requests
+          </button>
+
+          <button
+            onClick={handleLogout}
+            className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 transition"
+          >
+            Logout
+          </button>
+        </div>
       </div>
 
       <div className="border p-4 rounded mb-6">
