@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState, useMemo } from "react";
-// Query மற்றும் where ஆகியவற்றை இறக்குமதி செய்துள்ளோம்
 import { collection, getDocs, query, where } from "firebase/firestore";
 import { db } from "../../lib/firebase";
 
@@ -18,10 +17,9 @@ export default function RequestPage() {
   const fetchRequests = async () => {
     setLoading(true);
     try {
-      // 1. Firestore-ல் இருந்தே நேரடியாக 'published: true' கொண்ட தரவுகளை மட்டும் எடுக்கிறோம் (Optimized Query)
+      // Query Firestore directly for requests where published is true
       const q = query(collection(db, "requests"), where("published", "==", true));
       const querySnapshot = await getDocs(q);
-      
       const data = querySnapshot.docs.map((doc) => ({
         id: doc.id,
         ...doc.data(),
@@ -30,7 +28,6 @@ export default function RequestPage() {
     } catch (error) {
       console.error("Error fetching requests:", error);
     } finally {
-      // 2. எந்த பிழை வந்தாலும் loading நிறுத்தப்படுவதை உறுதி செய்கிறோம்
       setLoading(false);
     }
   };
@@ -65,12 +62,12 @@ export default function RequestPage() {
             .includes(selectedTopic.toLowerCase()));
 
       // 2. Search Filter (title, description, topics)
-      const queryStr = searchQuery.toLowerCase().trim();
+      const query = searchQuery.toLowerCase().trim();
       const matchesSearch =
-        !queryStr ||
-        (item.title && item.title.toLowerCase().includes(queryStr)) ||
-        (item.description && item.description.toLowerCase().includes(queryStr)) ||
-        (item.topics && item.topics.toLowerCase().includes(queryStr));
+        !query ||
+        (item.title && item.title.toLowerCase().includes(query)) ||
+        (item.description && item.description.toLowerCase().includes(query)) ||
+        (item.topics && item.topics.toLowerCase().includes(query));
 
       return matchesTopic && matchesSearch;
     });
