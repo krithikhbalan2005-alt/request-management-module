@@ -182,9 +182,9 @@ export default function RequestPage() {
                   <div className="flex justify-between items-start gap-4 mb-2">
                     <span className="text-xs text-gray-500">
                       {item.createdAt?.toDate
-                        ? item.createdAt.toDate().toLocaleDateString()
+                        ? item.createdAt.toDate().toLocaleString()
                         : item.createdAt
-                        ? new Date(item.createdAt).toLocaleDateString()
+                        ? new Date(item.createdAt).toLocaleString()
                         : "No Date"}
                     </span>
                   </div>
