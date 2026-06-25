@@ -26,6 +26,14 @@ export default function RequestPage() {
         id: doc.id,
         ...doc.data(),
       }));
+
+      // Sort by date (newest first)
+      data.sort((a, b) => {
+        const dateA = a.createdAt?.toDate ? a.createdAt.toDate() : new Date(0);
+        const dateB = b.createdAt?.toDate ? b.createdAt.toDate() : new Date(0);
+        return dateB - dateA;
+      });
+
       setRequests(data);
     } catch (error) {
       console.error("Error fetching requests:", error);
@@ -76,107 +84,163 @@ export default function RequestPage() {
   }, [requests, searchQuery, selectedTopic]);
 
   return (
-    <div className="p-6 max-w-4xl mx-auto">
-      {/* Header and Back Button */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
-        <h1 className="text-3xl font-extrabold text-gray-900 tracking-tight">Public Requests</h1>
-        <button
-          onClick={() => router.push("/dashboard")}
-          className="bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg font-medium transition duration-200 text-sm"
-        >
-          ← Go to Dashboard
-        </button>
-      </div>
-
-      {/* Search and Filter Controls */}
-      <div className="flex flex-col sm:flex-row gap-4 mb-8">
-        <div className="flex-1 relative">
-          <input
-            type="text"
-            placeholder="Search by title, description, or topics..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full border border-gray-300 p-3 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-200 text-sm"
-          />
-        </div>
-
-        <select
-          value={selectedTopic}
-          onChange={(e) => setSelectedTopic(e.target.value)}
-          className="border border-gray-300 p-3 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white min-w-[160px] text-sm text-gray-700 transition duration-200 cursor-pointer"
-        >
-          <option value="All">All Topics</option>
-          {allTopics.map((topic, index) => (
-            <option key={index} value={topic}>
-              {topic}
-            </option>
-          ))}
-        </select>
-      </div>
-
-      {loading ? (
-        <div className="flex flex-col items-center justify-center py-16 space-y-4">
-          <div className="w-10 h-10 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
-          <p className="text-gray-500 text-sm font-medium">Loading requests...</p>
-        </div>
-      ) : filteredRequests.length === 0 ? (
-        <div className="text-center py-16 px-6 border-2 border-dashed border-gray-200 rounded-xl bg-gray-50">
-          <svg
-            className="mx-auto h-12 w-12 text-gray-400 mb-4"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-            aria-hidden="true"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-            />
-          </svg>
-          <h3 className="text-base font-semibold text-gray-900 mb-1">No requests found</h3>
-          <p className="text-sm text-gray-500 max-w-xs mx-auto">
-            Try adjusting your search keywords or choosing another topic.
-          </p>
-        </div>
-      ) : (
-        <div className="space-y-4">
-          {filteredRequests.map((item) => (
-            <div
-              key={item.id}
-              className="border border-gray-200 p-5 rounded-xl shadow-sm bg-white hover:shadow-md hover:border-blue-200 transition duration-200 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4"
+    <div className="min-h-screen pb-16">
+      {/* Navbar Header */}
+      <header className="sticky top-0 z-50 glass-panel border-b border-indigo-500/10 px-6 py-4 mb-8">
+        <div className="max-w-5xl mx-auto flex justify-between items-center">
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => router.push("/dashboard")}
+              className="w-10 h-10 rounded-xl bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-300 border border-indigo-500/15 flex items-center justify-center transition cursor-pointer"
+              title="Back to Dashboard"
             >
-              <div className="flex-1 min-w-0">
-                <h2 className="text-xl font-bold text-gray-900 mb-1 leading-snug truncate">
-                  {item.title}
-                </h2>
-                <p className="text-gray-600 text-sm mb-3 line-clamp-2">
-                  {item.description}
-                </p>
-                <div className="flex flex-wrap items-center gap-3 text-xs">
-                  <span className="bg-blue-50 text-blue-700 font-semibold px-2.5 py-0.5 rounded-full">
-                    Topic: {item.topics}
-                  </span>
-                  <span className="text-gray-400">|</span>
-                  <span className="text-gray-400">
-                    {item.createdAt?.toDate
-                      ? item.createdAt.toDate().toLocaleDateString()
-                      : "No Date"}
-                  </span>
+              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+              </svg>
+            </button>
+            <div>
+              <h1 className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-indigo-200 via-purple-200 to-pink-200">
+                Public Feed
+              </h1>
+              <p className="text-xs text-gray-400">View and download reports</p>
+            </div>
+          </div>
+
+          <button
+            onClick={() => router.push("/dashboard")}
+            className="text-xs bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-300 border border-indigo-500/20 px-4 py-2 rounded-xl font-semibold transition cursor-pointer"
+          >
+            Dashboard
+          </button>
+        </div>
+      </header>
+
+      {/* Page Content Container */}
+      <main className="max-w-5xl mx-auto px-4">
+        {/* Search & Filter Bar */}
+        <section className="glass-panel p-4 rounded-2xl border border-indigo-500/10 flex flex-col md:flex-row gap-4 mb-8 animate-fade-in-up">
+          <div className="flex-1 relative">
+            <span className="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none text-gray-500">
+              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+            </span>
+            <input
+              type="text"
+              placeholder="Search request title, content, or topics..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full glass-input pl-11 pr-4 py-3 rounded-xl text-sm"
+            />
+          </div>
+
+          <div className="relative shrink-0">
+            <span className="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none text-gray-500">
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+              </svg>
+            </span>
+            <select
+              value={selectedTopic}
+              onChange={(e) => setSelectedTopic(e.target.value)}
+              className="w-full md:w-48 glass-input pl-10 pr-8 py-3 rounded-xl text-sm appearance-none cursor-pointer"
+            >
+              <option value="All" className="bg-[#0f111c] text-gray-200">All Topics</option>
+              {allTopics.map((topic, index) => (
+                <option key={index} value={topic} className="bg-[#0f111c] text-gray-200">
+                  {topic}
+                </option>
+              ))}
+            </select>
+            <span className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-gray-500">
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+              </svg>
+            </span>
+          </div>
+        </section>
+
+        {/* Request Grid */}
+        {loading ? (
+          <div className="flex flex-col items-center justify-center py-20 gap-4 animate-pulse">
+            <div className="w-10 h-10 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
+            <p className="text-gray-400 text-sm font-medium">Fetching public feed...</p>
+          </div>
+        ) : filteredRequests.length === 0 ? (
+          <section className="glass-panel p-16 rounded-2xl text-center border-2 border-dashed border-indigo-500/15 flex flex-col items-center animate-fade-in-up">
+            <div className="w-14 h-14 rounded-full bg-indigo-500/5 flex items-center justify-center text-indigo-400/40 mb-4 border border-indigo-500/10">
+              <svg className="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0a2 2 0 012 2v4a2 2 0 01-2 2H6a2 2 0 01-2-2v-4a2 2 0 012-2m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
+              </svg>
+            </div>
+            <h3 className="text-lg font-bold text-gray-200">No public requests found</h3>
+            <p className="text-gray-400 text-sm mt-1 max-w-sm">
+              We couldn't find any published requests matching your filter or search keywords.
+            </p>
+          </section>
+        ) : (
+          <section className="grid grid-cols-1 md:grid-cols-2 gap-6 animate-fade-in-up">
+            {filteredRequests.map((item) => (
+              <div
+                key={item.id}
+                className="glass-panel p-6 rounded-2xl border border-indigo-500/10 hover:border-indigo-500/25 shadow-md hover:shadow-lg transition-all duration-300 flex flex-col justify-between"
+              >
+                <div>
+                  <div className="flex justify-between items-start gap-4 mb-3">
+                    <span className="text-[11px] text-gray-500 bg-indigo-500/5 px-2.5 py-0.5 rounded-md border border-indigo-500/10">
+                      {item.createdAt?.toDate
+                        ? item.createdAt.toDate().toLocaleDateString(undefined, {
+                            year: "numeric",
+                            month: "short",
+                            day: "numeric",
+                          })
+                        : "No Date"}
+                    </span>
+                  </div>
+
+                  <h3 className="text-xl font-bold text-gray-100 mb-2 leading-snug truncate" title={item.title}>
+                    {item.title}
+                  </h3>
+
+                  <p className="text-gray-400 text-sm leading-relaxed mb-6 line-clamp-3">
+                    {item.description}
+                  </p>
+                </div>
+
+                <div className="flex flex-wrap items-center justify-between gap-4 pt-4 border-t border-indigo-500/5">
+                  <div className="flex flex-wrap gap-1">
+                    {item.topics &&
+                      item.topics
+                        .split(",")
+                        .map((t) => t.trim())
+                        .filter(Boolean)
+                        .slice(0, 3) // Max 3 badges visible
+                        .map((topic, i) => (
+                          <span
+                            key={i}
+                            className="bg-indigo-500/10 text-indigo-300 border border-indigo-500/20 px-2 py-0.5 rounded-full text-[11px] font-medium"
+                          >
+                            {topic}
+                          </span>
+                        ))}
+                  </div>
+
+                  <button
+                    onClick={() => router.push(`/request/${item.id}`)}
+                    className="inline-flex items-center gap-1.5 text-xs font-semibold bg-indigo-500 hover:bg-indigo-600 text-white px-4 py-2.5 rounded-xl shadow-md transition cursor-pointer"
+                  >
+                    View Details
+                    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                    </svg>
+                  </button>
                 </div>
               </div>
-              
-              <button
-                onClick={() => router.push(`/request/${item.id}`)}
-                className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold px-4 py-2.5 rounded-lg shadow-sm transition duration-200 whitespace-nowrap self-end sm:self-center"
-              >
-                View Details
-              </button>
-            </div>
-          ))}
-        </div>
-      )}
+            ))}
+          </section>
+        )}
+      </main>
     </div>
   );
 }
+
