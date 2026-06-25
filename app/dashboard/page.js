@@ -154,10 +154,9 @@ export default function Dashboard() {
   };
 
   const handleDelete = async (id) => {
-    if (!window.confirm("Are you sure you want to delete this request?")) {
+    if (typeof window !== "undefined" && !window.confirm("Are you sure you want to delete this request?")) {
       return;
     }
-
     try {
       await deleteDoc(doc(db, "requests", id));
       showNotification("Request deleted successfully");
@@ -175,6 +174,7 @@ export default function Dashboard() {
       showNotification(error.message, "error");
     }
   };
+
 
   const handleLogout = async () => {
     try {

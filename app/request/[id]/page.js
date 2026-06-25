@@ -44,11 +44,22 @@ export default function RequestDetailsPage({ params }) {
     }
   };
 
+  const sanitizeForPDF = (text) => {
+    if (!text) return "";
+    return text
+      .replace(/[\u2018\u2019]/g, "'")
+      .replace(/[\u201C\u201D]/g, '"')
+      .replace(/[\u2013\u2014]/g, "-")
+      .split("")
+      .map((char) => (char.charCodeAt(0) <= 255 ? char : "?"))
+      .join("");
+  };
+
   const handleDownloadPDF = () => {
     if (!request) return;
 
     try {
-      const doc = new jsPDF({
+      const pdf = new jsPDF({
         orientation: "portrait",
         unit: "mm",
         format: "a4",
@@ -59,28 +70,28 @@ export default function RequestDetailsPage({ params }) {
       const contentWidth = pageWidth - 2 * margin; // 170mm
 
       // Simple Title
-      doc.setFont("helvetica", "bold");
-      doc.setFontSize(20);
-      doc.setTextColor(30, 30, 30);
-      doc.text("Request Report", margin, 25);
+      pdf.setFont("helvetica", "bold");
+      pdf.setFontSize(20);
+      pdf.setTextColor(30, 30, 30);
+      pdf.text("Request Report", margin, 25);
 
       // Separator Line
-      doc.setDrawColor(200, 200, 200);
-      doc.setLineWidth(0.5);
-      doc.line(margin, 29, pageWidth - margin, 29);
+      pdf.setDrawColor(200, 200, 200);
+      pdf.setLineWidth(0.5);
+      pdf.line(margin, 29, pageWidth - margin, 29);
 
       let currentY = 38;
 
       const addField = (label, val) => {
-        doc.setFont("helvetica", "bold");
-        doc.setFontSize(11);
-        doc.setTextColor(80, 80, 80);
-        doc.text(label, margin, currentY);
+        pdf.setFont("helvetica", "bold");
+        pdf.setFontSize(11);
+        pdf.setTextColor(80, 80, 80);
+        pdf.text(label, margin, currentY);
 
-        doc.setFont("helvetica", "normal");
-        doc.setTextColor(20, 20, 20);
-        const wrappedVal = doc.splitTextToSize(val || "N/A", contentWidth - 30);
-        doc.text(wrappedVal, margin + 30, currentY);
+        pdf.setFont("helvetica", "normal");
+        pdf.setTextColor(20, 20, 20);
+        const wrappedVal = pdf.splitTextToSize(sanitizeForPDF(val) || "N/A", contentWidth - 30);
+        pdf.text(wrappedVal, margin + 30, currentY);
         
         currentY += wrappedVal.length * 6 + 4;
       };
@@ -95,38 +106,47 @@ export default function RequestDetailsPage({ params }) {
       addField("Created At:", dateStr);
 
       currentY += 4;
-      doc.setFont("helvetica", "bold");
-      doc.setFontSize(11);
-      doc.setTextColor(80, 80, 80);
-      doc.text("Description:", margin, currentY);
+      pdf.setFont("helvetica", "bold");
+      pdf.setFontSize(11);
+      pdf.setTextColor(80, 80, 80);
+      pdf.text("Description:", margin, currentY);
       currentY += 6;
 
-      doc.setFont("helvetica", "normal");
-      doc.setFontSize(11);
-      doc.setTextColor(20, 20, 20);
-      const wrappedDesc = doc.splitTextToSize(request.description || "", contentWidth);
-      doc.text(wrappedDesc, margin, currentY);
+      pdf.setFont("helvetica", "normal");
+      pdf.setFontSize(11);
+      pdf.setTextColor(20, 20, 20);
+      const wrappedDesc = pdf.splitTextToSize(sanitizeForPDF(request.description) || "", contentWidth);
+      pdf.text(wrappedDesc, margin, currentY);
 
       const formatFilename = (title) => {
-        if (!title) return "Request";
-        return title
+        if (!title) return "report";
+        const cleaned = title
           .trim()
           .toLowerCase()
-          .replace(/[^a-z0-9]/g, "-");
+          .replace(/[^a-z0-9]/g, "-")
+          .replace(/-+/g, "-")
+          .replace(/^-|-$/g, "");
+        return cleaned || "report";
       };
 
       const filename = `request-${formatFilename(request.title)}.pdf`;
-      doc.save(filename);
+      pdf.save(filename);
     } catch (err) {
       console.error("PDF generation failed:", err);
       alert("Failed to download PDF. Please try again.");
     }
   };
 
+  const handlePrint = () => {
+    if (typeof window !== "undefined") {
+      window.print();
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 text-gray-800 pb-16">
       {/* Simple Header */}
-      <header className="bg-white border-b border-gray-200 px-6 py-4 mb-8">
+      <header className="bg-white border-b border-gray-200 px-6 py-4 mb-8 no-print">
         <div className="max-w-3xl mx-auto flex justify-between items-center gap-4">
           <button
             onClick={() => router.push("/request")}
@@ -136,12 +156,21 @@ export default function RequestDetailsPage({ params }) {
           </button>
 
           {request && !loading && !error && (
-            <button
-              onClick={handleDownloadPDF}
-              className="bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold px-3 py-2 rounded transition cursor-pointer"
-            >
-              Download PDF
-            </button>
+            <div className="flex gap-2">
+              <button
+                onClick={handlePrint}
+                className="bg-green-600 hover:bg-green-700 text-white text-xs font-bold px-3 py-2 rounded transition cursor-pointer"
+              >
+                Print / Save PDF
+              </button>
+
+              <button
+                onClick={handleDownloadPDF}
+                className="bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold px-3 py-2 rounded transition cursor-pointer"
+              >
+                Download PDF
+              </button>
+            </div>
           )}
         </div>
       </header>
