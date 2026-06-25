@@ -130,7 +130,17 @@ export default function RequestDetailsPage({ params }) {
       };
 
       const filename = `request-${formatFilename(request.title)}.pdf`;
-      pdf.save(filename);
+      const blob = pdf.output("blob");
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      setTimeout(() => {
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+      }, 1000);
     } catch (err) {
       console.error("PDF generation failed:", err);
       alert("Failed to download PDF. Please try again.");
