@@ -493,6 +493,8 @@ export default function Dashboard() {
                       <span className="text-xs text-gray-500">
                         {item.createdAt?.toDate
                           ? item.createdAt.toDate().toLocaleDateString()
+                          : item.createdAt
+                          ? new Date(item.createdAt).toLocaleDateString()
                           : "No Date"}
                       </span>
                     </div>
