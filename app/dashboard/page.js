@@ -11,7 +11,7 @@ import {
 } from "firebase/firestore";
 import { signOut, onAuthStateChanged } from "firebase/auth";
 import { useRouter } from "next/navigation";
-import { db, auth } from "../../lib/firebase";
+import { db, auth, isMockConfig } from "../../lib/firebase";
 
 export default function Dashboard() {
   const [user, setUser] = useState(null);
@@ -60,7 +60,7 @@ export default function Dashboard() {
   const fetchRequests = useCallback(async () => {
     setLoading(true);
     try {
-      const isMockMode = auth.config?.apiKey === "mock-api-key" || sessionStorage.getItem("mockUser") !== null;
+      const isMockMode = isMockConfig || sessionStorage.getItem("mockUser") !== null;
       if (isMockMode) {
         const localRequestsStr = localStorage.getItem("requests") || "[]";
         const localRequests = JSON.parse(localRequestsStr);
@@ -77,8 +77,8 @@ export default function Dashboard() {
       }));
 
       data.sort((a, b) => {
-        const dateA = a.createdAt?.toDate ? a.createdAt.toDate() : new Date(0);
-        const dateB = b.createdAt?.toDate ? b.createdAt.toDate() : new Date(0);
+        const dateA = a.createdAt?.toDate ? a.createdAt.toDate() : (a.createdAt ? new Date(a.createdAt) : new Date(0));
+        const dateB = b.createdAt?.toDate ? b.createdAt.toDate() : (b.createdAt ? new Date(b.createdAt) : new Date(0));
         return dateB - dateA;
       });
 
@@ -111,7 +111,7 @@ export default function Dashboard() {
    
     setLoading(true);
     try {
-      const isMockMode = auth.config?.apiKey === "mock-api-key" || sessionStorage.getItem("mockUser") !== null;
+      const isMockMode = isMockConfig || sessionStorage.getItem("mockUser") !== null;
       if (isMockMode) {
         const localRequestsStr = localStorage.getItem("requests") || "[]";
         let localRequests = JSON.parse(localRequestsStr);
@@ -223,7 +223,7 @@ export default function Dashboard() {
 
   const handlePublish = async (id) => {
     try {
-      const isMockMode = auth.config?.apiKey === "mock-api-key" || sessionStorage.getItem("mockUser") !== null;
+      const isMockMode = isMockConfig || sessionStorage.getItem("mockUser") !== null;
       if (isMockMode) {
         const localRequestsStr = localStorage.getItem("requests") || "[]";
         let localRequests = JSON.parse(localRequestsStr);
@@ -261,7 +261,7 @@ export default function Dashboard() {
       return;
     }
     try {
-      const isMockMode = auth.config?.apiKey === "mock-api-key" || sessionStorage.getItem("mockUser") !== null;
+      const isMockMode = isMockConfig || sessionStorage.getItem("mockUser") !== null;
       if (isMockMode) {
         const localRequestsStr = localStorage.getItem("requests") || "[]";
         let localRequests = JSON.parse(localRequestsStr);

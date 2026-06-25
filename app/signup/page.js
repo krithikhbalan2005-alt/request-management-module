@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { createUserWithEmailAndPassword } from "firebase/auth";
-import { auth } from "../../lib/firebase";
+import { auth, isMockConfig } from "../../lib/firebase";
 import { useRouter } from "next/navigation";
 
 export default function SignupPage() {
@@ -31,7 +31,7 @@ export default function SignupPage() {
     setError(null);
     try {
       // Force mock mode if Firebase API key is mock/invalid
-      if (auth.config?.apiKey === "mock-api-key") {
+      if (isMockConfig) {
         throw { code: "auth/api-key-not-valid" };
       }
       await createUserWithEmailAndPassword(

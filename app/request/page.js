@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useMemo } from "react";
 import { collection, getDocs, query, where } from "firebase/firestore";
-import { db, auth } from "../../lib/firebase";
+import { db, auth, isMockConfig } from "../../lib/firebase";
 import { useRouter } from "next/navigation";
 
 export default function RequestPage() {
@@ -19,16 +19,24 @@ export default function RequestPage() {
   const fetchRequests = async () => {
     setLoading(true);
     try {
-      const isMockMode = auth.config?.apiKey === "mock-api-key" || sessionStorage.getItem("mockUser") !== null;
+      const isMockMode = isMockConfig || sessionStorage.getItem("mockUser") !== null;
+      console.log("[DEBUG] fetchRequests triggered. isMockMode:", isMockMode);
+      
       if (isMockMode) {
         const localRequestsStr = localStorage.getItem("requests") || "[]";
         const localRequests = JSON.parse(localRequestsStr).filter((r) => r.published);
-        localRequests.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+        localRequests.sort((a, b) => {
+          const dateA = a.createdAt ? new Date(a.createdAt) : new Date(0);
+          const dateB = b.createdAt ? new Date(b.createdAt) : new Date(0);
+          return dateB - dateA;
+        });
+        console.log("[DEBUG] Local storage requests count:", localRequests.length, localRequests);
         setRequests(localRequests);
         setLoading(false);
         return;
       }
 
+      console.log("[DEBUG] Querying Firestore for published requests...");
       const q = query(collection(db, "requests"), where("published", "==", true));
       const querySnapshot = await getDocs(q);
       const data = querySnapshot.docs.map((doc) => ({
@@ -36,19 +44,26 @@ export default function RequestPage() {
         ...doc.data(),
       }));
 
+      console.log("[DEBUG] Firestore query returned documents:", data.length, data);
+
       data.sort((a, b) => {
-        const dateA = a.createdAt?.toDate ? a.createdAt.toDate() : new Date(0);
-        const dateB = b.createdAt?.toDate ? b.createdAt.toDate() : new Date(0);
+        const dateA = a.createdAt?.toDate ? a.createdAt.toDate() : (a.createdAt ? new Date(a.createdAt) : new Date(0));
+        const dateB = b.createdAt?.toDate ? b.createdAt.toDate() : (b.createdAt ? new Date(b.createdAt) : new Date(0));
         return dateB - dateA;
       });
 
       setRequests(data);
     } catch (error) {
-      console.error("Error fetching requests:", error);
+      console.error("[DEBUG] Error fetching requests:", error);
       // Fallback
+      console.warn("[DEBUG] Falling back to local storage due to Firestore error...");
       const localRequestsStr = localStorage.getItem("requests") || "[]";
       const localRequests = JSON.parse(localRequestsStr).filter((r) => r.published);
-      localRequests.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+      localRequests.sort((a, b) => {
+        const dateA = a.createdAt ? new Date(a.createdAt) : new Date(0);
+        const dateB = b.createdAt ? new Date(b.createdAt) : new Date(0);
+        return dateB - dateA;
+      });
       setRequests(localRequests);
     } finally {
       setLoading(false);

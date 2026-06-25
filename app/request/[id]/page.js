@@ -2,7 +2,7 @@
 
 import { useEffect, useState, use } from "react";
 import { doc, getDoc } from "firebase/firestore";
-import { db, auth } from "../../../lib/firebase";
+import { db, auth, isMockConfig } from "../../../lib/firebase";
 import { useRouter } from "next/navigation";
 import { jsPDF } from "jspdf";
 
@@ -25,7 +25,7 @@ export default function RequestDetailsPage({ params }) {
     setLoading(true);
     setError(null);
     try {
-      const isMockMode = auth.config?.apiKey === "mock-api-key" || sessionStorage.getItem("mockUser") !== null;
+      const isMockMode = isMockConfig || sessionStorage.getItem("mockUser") !== null;
       if (isMockMode) {
         const localRequestsStr = localStorage.getItem("requests") || "[]";
         const localRequests = JSON.parse(localRequestsStr);
