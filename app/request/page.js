@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useMemo } from "react";
 import { collection, getDocs, query, where } from "firebase/firestore";
-import { db } from "../../lib/firebase";
+import { db, auth } from "../../lib/firebase";
 import { useRouter } from "next/navigation";
 
 export default function RequestPage() {
@@ -19,6 +19,16 @@ export default function RequestPage() {
   const fetchRequests = async () => {
     setLoading(true);
     try {
+      const isMockMode = auth.config?.apiKey === "mock-api-key" || sessionStorage.getItem("mockUser") !== null;
+      if (isMockMode) {
+        const localRequestsStr = localStorage.getItem("requests") || "[]";
+        const localRequests = JSON.parse(localRequestsStr).filter((r) => r.published);
+        localRequests.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+        setRequests(localRequests);
+        setLoading(false);
+        return;
+      }
+
       const q = query(collection(db, "requests"), where("published", "==", true));
       const querySnapshot = await getDocs(q);
       const data = querySnapshot.docs.map((doc) => ({
@@ -35,6 +45,11 @@ export default function RequestPage() {
       setRequests(data);
     } catch (error) {
       console.error("Error fetching requests:", error);
+      // Fallback
+      const localRequestsStr = localStorage.getItem("requests") || "[]";
+      const localRequests = JSON.parse(localRequestsStr).filter((r) => r.published);
+      localRequests.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+      setRequests(localRequests);
     } finally {
       setLoading(false);
     }

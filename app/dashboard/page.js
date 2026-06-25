@@ -30,6 +30,14 @@ export default function Dashboard() {
   const titleInputRef = useRef(null);
 
   useEffect(() => {
+    // Check for mock login session first
+    const mockUserStr = sessionStorage.getItem("mockUser");
+    if (mockUserStr) {
+      setUser(JSON.parse(mockUserStr));
+      setAuthLoading(false);
+      return;
+    }
+
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
       if (currentUser) {
         setUser(currentUser);
@@ -52,6 +60,16 @@ export default function Dashboard() {
   const fetchRequests = useCallback(async () => {
     setLoading(true);
     try {
+      const isMockMode = auth.config?.apiKey === "mock-api-key" || sessionStorage.getItem("mockUser") !== null;
+      if (isMockMode) {
+        const localRequestsStr = localStorage.getItem("requests") || "[]";
+        const localRequests = JSON.parse(localRequestsStr);
+        localRequests.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+        setRequests(localRequests);
+        setLoading(false);
+        return;
+      }
+
       const querySnapshot = await getDocs(collection(db, "requests"));
       const data = querySnapshot.docs.map((doc) => ({
         id: doc.id,
@@ -67,7 +85,12 @@ export default function Dashboard() {
       setRequests(data);
     } catch (error) {
       console.error("Error fetching requests:", error);
-      showNotification("Failed to fetch requests: " + error.message, "error");
+      // Automatically fallback to local data storage on connection or config failure
+      const localRequestsStr = localStorage.getItem("requests") || "[]";
+      const localRequests = JSON.parse(localRequestsStr);
+      localRequests.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+      setRequests(localRequests);
+      showNotification("Using local data storage fallback.", "warning");
     } finally {
       setLoading(false);
     }
@@ -88,6 +111,40 @@ export default function Dashboard() {
    
     setLoading(true);
     try {
+      const isMockMode = auth.config?.apiKey === "mock-api-key" || sessionStorage.getItem("mockUser") !== null;
+      if (isMockMode) {
+        const localRequestsStr = localStorage.getItem("requests") || "[]";
+        let localRequests = JSON.parse(localRequestsStr);
+
+        if (editId) {
+          localRequests = localRequests.map((r) =>
+            r.id === editId
+              ? { ...r, title: title.trim(), description: description.trim(), topics: topics.trim() }
+              : r
+          );
+          showNotification("Request updated successfully!");
+          setEditId(null);
+        } else {
+          localRequests.push({
+            id: Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15),
+            title: title.trim(),
+            description: description.trim(),
+            topics: topics.trim(),
+            published: false,
+            createdAt: new Date().toISOString(),
+          });
+          showNotification("New request created successfully!");
+        }
+
+        localStorage.setItem("requests", JSON.stringify(localRequests));
+        setTitle("");
+        setDescription("");
+        setTopics("");
+        fetchRequests();
+        setLoading(false);
+        return;
+      }
+
       if (editId) {
         await updateDoc(doc(db, "requests", editId), {
           title: title.trim(),
@@ -115,7 +172,32 @@ export default function Dashboard() {
       fetchRequests();
     } catch (error) {
       console.error("Error submitting request:", error);
-      showNotification(error.message, "error");
+      // Fallback
+      const localRequestsStr = localStorage.getItem("requests") || "[]";
+      let localRequests = JSON.parse(localRequestsStr);
+      if (editId) {
+        localRequests = localRequests.map((r) =>
+          r.id === editId
+            ? { ...r, title: title.trim(), description: description.trim(), topics: topics.trim() }
+            : r
+        );
+        setEditId(null);
+      } else {
+        localRequests.push({
+          id: Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15),
+          title: title.trim(),
+          description: description.trim(),
+          topics: topics.trim(),
+          published: false,
+          createdAt: new Date().toISOString(),
+        });
+      }
+      localStorage.setItem("requests", JSON.stringify(localRequests));
+      setTitle("");
+      setDescription("");
+      setTopics("");
+      fetchRequests();
+      showNotification("Saved to local storage fallback.", "warning");
     } finally {
       setLoading(false);
     }
@@ -141,6 +223,19 @@ export default function Dashboard() {
 
   const handlePublish = async (id) => {
     try {
+      const isMockMode = auth.config?.apiKey === "mock-api-key" || sessionStorage.getItem("mockUser") !== null;
+      if (isMockMode) {
+        const localRequestsStr = localStorage.getItem("requests") || "[]";
+        let localRequests = JSON.parse(localRequestsStr);
+        localRequests = localRequests.map((r) =>
+          r.id === id ? { ...r, published: true } : r
+        );
+        localStorage.setItem("requests", JSON.stringify(localRequests));
+        showNotification("Request published successfully!");
+        fetchRequests();
+        return;
+      }
+
       await updateDoc(doc(db, "requests", id), {
         published: true,
       });
@@ -149,7 +244,15 @@ export default function Dashboard() {
       fetchRequests();
     } catch (error) {
       console.error("Error publishing request:", error);
-      showNotification(error.message, "error");
+      // Fallback
+      const localRequestsStr = localStorage.getItem("requests") || "[]";
+      let localRequests = JSON.parse(localRequestsStr);
+      localRequests = localRequests.map((r) =>
+        r.id === id ? { ...r, published: true } : r
+      );
+      localStorage.setItem("requests", JSON.stringify(localRequests));
+      showNotification("Published in local storage fallback.", "warning");
+      fetchRequests();
     }
   };
 
@@ -158,6 +261,23 @@ export default function Dashboard() {
       return;
     }
     try {
+      const isMockMode = auth.config?.apiKey === "mock-api-key" || sessionStorage.getItem("mockUser") !== null;
+      if (isMockMode) {
+        const localRequestsStr = localStorage.getItem("requests") || "[]";
+        let localRequests = JSON.parse(localRequestsStr);
+        localRequests = localRequests.filter((r) => r.id !== id);
+        localStorage.setItem("requests", JSON.stringify(localRequests));
+        showNotification("Request deleted successfully");
+        if (id === editId) {
+          setTitle("");
+          setDescription("");
+          setTopics("");
+          setEditId(null);
+        }
+        fetchRequests();
+        return;
+      }
+
       await deleteDoc(doc(db, "requests", id));
       showNotification("Request deleted successfully");
 
@@ -171,13 +291,26 @@ export default function Dashboard() {
       fetchRequests();
     } catch (error) {
       console.error("Error deleting request:", error);
-      showNotification(error.message, "error");
+      // Fallback
+      const localRequestsStr = localStorage.getItem("requests") || "[]";
+      let localRequests = JSON.parse(localRequestsStr);
+      localRequests = localRequests.filter((r) => r.id !== id);
+      localStorage.setItem("requests", JSON.stringify(localRequests));
+      showNotification("Deleted from local storage fallback.", "warning");
+      if (id === editId) {
+        setTitle("");
+        setDescription("");
+        setTopics("");
+        setEditId(null);
+      }
+      fetchRequests();
     }
   };
 
 
   const handleLogout = async () => {
     try {
+      sessionStorage.removeItem("mockUser");
       await signOut(auth);
       router.push("/login");
     } catch (error) {

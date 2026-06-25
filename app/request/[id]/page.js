@@ -2,7 +2,7 @@
 
 import { useEffect, useState, use } from "react";
 import { doc, getDoc } from "firebase/firestore";
-import { db } from "../../../lib/firebase";
+import { db, auth } from "../../../lib/firebase";
 import { useRouter } from "next/navigation";
 import { jsPDF } from "jspdf";
 
@@ -25,6 +25,20 @@ export default function RequestDetailsPage({ params }) {
     setLoading(true);
     setError(null);
     try {
+      const isMockMode = auth.config?.apiKey === "mock-api-key" || sessionStorage.getItem("mockUser") !== null;
+      if (isMockMode) {
+        const localRequestsStr = localStorage.getItem("requests") || "[]";
+        const localRequests = JSON.parse(localRequestsStr);
+        const found = localRequests.find((r) => r.id === id);
+        if (found) {
+          setRequest(found);
+        } else {
+          setError("Request Not Found");
+        }
+        setLoading(false);
+        return;
+      }
+
       const docRef = doc(db, "requests", id);
       const docSnap = await getDoc(docRef);
 
@@ -34,11 +48,27 @@ export default function RequestDetailsPage({ params }) {
           ...docSnap.data(),
         });
       } else {
-        setError("Request Not Found");
+        // Try fallback
+        const localRequestsStr = localStorage.getItem("requests") || "[]";
+        const localRequests = JSON.parse(localRequestsStr);
+        const found = localRequests.find((r) => r.id === id);
+        if (found) {
+          setRequest(found);
+        } else {
+          setError("Request Not Found");
+        }
       }
     } catch (err) {
       console.error("Error fetching request details:", err);
-      setError("Failed to fetch request details. Please try again.");
+      // Try fallback
+      const localRequestsStr = localStorage.getItem("requests") || "[]";
+      const localRequests = JSON.parse(localRequestsStr);
+      const found = localRequests.find((r) => r.id === id);
+      if (found) {
+        setRequest(found);
+      } else {
+        setError("Failed to fetch request details. Please try again.");
+      }
     } finally {
       setLoading(false);
     }
@@ -102,6 +132,8 @@ export default function RequestDetailsPage({ params }) {
 
       const dateStr = request.createdAt?.toDate
         ? request.createdAt.toDate().toLocaleString()
+        : typeof request.createdAt === "string"
+        ? new Date(request.createdAt).toLocaleString()
         : "No Date";
       addField("Created At:", dateStr);
 
@@ -202,6 +234,8 @@ export default function RequestDetailsPage({ params }) {
               <span className="text-xs text-gray-500">
                 Created: {request.createdAt?.toDate
                   ? request.createdAt.toDate().toLocaleString()
+                  : typeof request.createdAt === "string"
+                  ? new Date(request.createdAt).toLocaleString()
                   : "No Date"}
               </span>
               <span className="bg-green-100 text-green-800 px-2 py-0.5 rounded text-xs font-bold uppercase">
