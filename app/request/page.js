@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useMemo } from "react";
 import { collection, getDocs, query, where } from "firebase/firestore";
+import { onAuthStateChanged } from "firebase/auth";
 import { db, auth, isMockConfig } from "../../lib/firebase";
 import { useRouter } from "next/navigation";
 
@@ -10,11 +11,21 @@ export default function RequestPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedTopic, setSelectedTopic] = useState("All");
   const [loading, setLoading] = useState(true);
+  const [authInitialized, setAuthInitialized] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
-    fetchRequests();
+    const unsubscribe = onAuthStateChanged(auth, () => {
+      setAuthInitialized(true);
+    });
+    return () => unsubscribe();
   }, []);
+
+  useEffect(() => {
+    if (authInitialized) {
+      fetchRequests();
+    }
+  }, [authInitialized]);
 
   const fetchRequests = async () => {
     setLoading(true);
