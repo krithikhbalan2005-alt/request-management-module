@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { signInWithEmailAndPassword } from "firebase/auth";
-import { auth, isMockConfig } from "../../lib/firebase";
+import { auth } from "../../lib/firebase";
 import { useRouter } from "next/navigation";
 
 export default function LoginPage() {
@@ -24,40 +24,11 @@ export default function LoginPage() {
     setLoading(true);
     setError(null);
     try {
-      // Force mock mode if Firebase API key is mock/invalid
-      if (isMockConfig) {
-        throw { code: "auth/api-key-not-valid" };
-      }
       await signInWithEmailAndPassword(auth, email.trim(), password);
       console.log("SUCCESS");
       router.push("/dashboard");
     } catch (err) {
       console.error("Login error:", err);
-      
-      // Graceful error mapping and mock fallback for demo purposes
-      if (err.code === "auth/api-key-not-valid" || err.code === "auth/invalid-api-key") {
-        if (password.length < 6) {
-          setError("Password should be at least 6 characters.");
-          setLoading(false);
-          return;
-        }
-
-        const localUsersStr = localStorage.getItem("mockUsers") || "[]";
-        const localUsers = JSON.parse(localUsersStr);
-        const matchedUser = localUsers.find(
-          (u) => u.email.toLowerCase() === email.trim().toLowerCase() && u.password === password
-        );
-
-        if (matchedUser) {
-          sessionStorage.setItem("mockUser", JSON.stringify({ email: email.trim() }));
-          router.push("/dashboard");
-          return;
-        } else {
-          setError("Invalid email or password. Please try again.");
-          setLoading(false);
-          return;
-        }
-      }
 
       if (err.code === "auth/invalid-credential" || err.code === "auth/user-not-found" || err.code === "auth/wrong-password") {
         setError("Invalid email or password. Please try again.");
