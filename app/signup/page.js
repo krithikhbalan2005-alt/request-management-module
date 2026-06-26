@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { createUserWithEmailAndPassword } from "firebase/auth";
-import { auth, isMockConfig } from "../../lib/firebase";
+import { auth } from "../../lib/firebase";
 import { useRouter } from "next/navigation";
 
 export default function SignupPage() {
@@ -30,10 +30,6 @@ export default function SignupPage() {
     setLoading(true);
     setError(null);
     try {
-      // Force mock mode if Firebase API key is mock/invalid
-      if (isMockConfig) {
-        throw { code: "auth/api-key-not-valid" };
-      }
       await createUserWithEmailAndPassword(
         auth,
         email.trim(),
@@ -46,28 +42,6 @@ export default function SignupPage() {
       }, 2000);
     } catch (err) {
       console.error("Signup error:", err);
-      if (err.code === "auth/api-key-not-valid" || err.code === "auth/invalid-api-key") {
-        // Mock signup success
-        const localUsersStr = localStorage.getItem("mockUsers") || "[]";
-        const localUsers = JSON.parse(localUsersStr);
-        const emailExists = localUsers.some((u) => u.email.toLowerCase() === email.trim().toLowerCase());
-
-        if (emailExists) {
-          setError("This email address is already in use.");
-          setLoading(false);
-          return;
-        }
-
-        localUsers.push({ email: email.trim(), password: password });
-        localStorage.setItem("mockUsers", JSON.stringify(localUsers));
-
-        setSuccess(true);
-        setTimeout(() => {
-          router.push("/login");
-        }, 2000);
-        return;
-      }
-
       if (err.code === "auth/email-already-in-use") {
         setError("This email address is already in use.");
       } else if (err.code === "auth/invalid-email") {

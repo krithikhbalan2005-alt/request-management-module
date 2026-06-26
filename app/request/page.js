@@ -3,7 +3,7 @@
 import { useEffect, useState, useMemo } from "react";
 import { collection, getDocs, query, where } from "firebase/firestore";
 import { onAuthStateChanged } from "firebase/auth";
-import { db, auth, isMockConfig } from "../../lib/firebase";
+import { db, auth } from "../../lib/firebase";
 import { useRouter } from "next/navigation";
 
 export default function RequestPage() {
@@ -12,7 +12,7 @@ export default function RequestPage() {
   const [selectedTopic, setSelectedTopic] = useState("All");
   const [loading, setLoading] = useState(true);
   const [authInitialized, setAuthInitialized] = useState(false);
-  const [localFallbackError, setLocalFallbackError] = useState(null);
+  const [error, setError] = useState(null);
   const router = useRouter();
 
   useEffect(() => {
@@ -30,24 +30,8 @@ export default function RequestPage() {
 
   const fetchRequests = async () => {
     setLoading(true);
+    setError(null);
     try {
-      const isMockMode = isMockConfig || sessionStorage.getItem("mockUser") !== null;
-      console.log("[DEBUG] fetchRequests triggered. isMockMode:", isMockMode);
-      
-      if (isMockMode) {
-        const localRequestsStr = localStorage.getItem("requests") || "[]";
-        const localRequests = JSON.parse(localRequestsStr).filter((r) => r.published);
-        localRequests.sort((a, b) => {
-          const dateA = a.createdAt ? new Date(a.createdAt) : new Date(0);
-          const dateB = b.createdAt ? new Date(b.createdAt) : new Date(0);
-          return dateB - dateA;
-        });
-        console.log("[DEBUG] Local storage requests count:", localRequests.length, localRequests);
-        setRequests(localRequests);
-        setLoading(false);
-        return;
-      }
-
       console.log("[DEBUG] Querying Firestore for published requests...");
       const q = query(collection(db, "requests"), where("published", "==", true));
       const querySnapshot = await getDocs(q);
@@ -65,19 +49,9 @@ export default function RequestPage() {
       });
 
       setRequests(data);
-    } catch (error) {
-      console.error("[DEBUG] Error fetching requests:", error);
-      setLocalFallbackError(error.message);
-      // Fallback
-      console.warn("[DEBUG] Falling back to local storage due to Firestore error...");
-      const localRequestsStr = localStorage.getItem("requests") || "[]";
-      const localRequests = JSON.parse(localRequestsStr).filter((r) => r.published);
-      localRequests.sort((a, b) => {
-        const dateA = a.createdAt ? new Date(a.createdAt) : new Date(0);
-        const dateB = b.createdAt ? new Date(b.createdAt) : new Date(0);
-        return dateB - dateA;
-      });
-      setRequests(localRequests);
+    } catch (err) {
+      console.error("[DEBUG] Error fetching requests:", err);
+      setError(err.message);
     } finally {
       setLoading(false);
     }
@@ -147,14 +121,14 @@ export default function RequestPage() {
 
       {/* Main Body */}
       <main className="max-w-4xl mx-auto px-4">
-        {localFallbackError && (
-          <div className="mb-6 p-4 rounded border bg-amber-100 border-amber-200 text-amber-800 text-sm">
-            <p className="font-bold mb-1">⚠️ Firebase Offline Fallback Mode Active</p>
+        {error && (
+          <div className="mb-6 p-4 rounded border bg-red-100 border-red-200 text-red-800 text-sm">
+            <p className="font-bold mb-1">⚠️ Error Loading Requests</p>
             <p className="text-xs">
-              The application failed to fetch requests from the real Firestore database and is currently reading/writing locally from your browser storage.
+              Failed to fetch public requests from the live database. Please check your internet connection and try again.
             </p>
             <p className="text-xs mt-1 font-semibold">
-              Error details: {localFallbackError}
+              Error details: {error}
             </p>
           </div>
         )}

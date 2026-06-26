@@ -2,7 +2,7 @@
 
 import { useEffect, useState, use } from "react";
 import { doc, getDoc } from "firebase/firestore";
-import { db, auth, isMockConfig } from "../../../lib/firebase";
+import { db, auth } from "../../../lib/firebase";
 import { useRouter } from "next/navigation";
 import { jsPDF } from "jspdf";
 
@@ -25,20 +25,6 @@ export default function RequestDetailsPage({ params }) {
     setLoading(true);
     setError(null);
     try {
-      const isMockMode = isMockConfig || sessionStorage.getItem("mockUser") !== null;
-      if (isMockMode) {
-        const localRequestsStr = localStorage.getItem("requests") || "[]";
-        const localRequests = JSON.parse(localRequestsStr);
-        const found = localRequests.find((r) => r.id === id);
-        if (found) {
-          setRequest(found);
-        } else {
-          setError("Request Not Found");
-        }
-        setLoading(false);
-        return;
-      }
-
       const docRef = doc(db, "requests", id);
       const docSnap = await getDoc(docRef);
 
@@ -48,27 +34,11 @@ export default function RequestDetailsPage({ params }) {
           ...docSnap.data(),
         });
       } else {
-        // Try fallback
-        const localRequestsStr = localStorage.getItem("requests") || "[]";
-        const localRequests = JSON.parse(localRequestsStr);
-        const found = localRequests.find((r) => r.id === id);
-        if (found) {
-          setRequest(found);
-        } else {
-          setError("Request Not Found");
-        }
+        setError("Request Not Found");
       }
     } catch (err) {
       console.error("Error fetching request details:", err);
-      // Try fallback
-      const localRequestsStr = localStorage.getItem("requests") || "[]";
-      const localRequests = JSON.parse(localRequestsStr);
-      const found = localRequests.find((r) => r.id === id);
-      if (found) {
-        setRequest(found);
-      } else {
-        setError("Failed to fetch request details. Please try again.");
-      }
+      setError("Failed to fetch request details. Please try again.");
     } finally {
       setLoading(false);
     }
