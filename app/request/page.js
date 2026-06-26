@@ -12,6 +12,7 @@ export default function RequestPage() {
   const [selectedTopic, setSelectedTopic] = useState("All");
   const [loading, setLoading] = useState(true);
   const [authInitialized, setAuthInitialized] = useState(false);
+  const [localFallbackError, setLocalFallbackError] = useState(null);
   const router = useRouter();
 
   useEffect(() => {
@@ -66,6 +67,7 @@ export default function RequestPage() {
       setRequests(data);
     } catch (error) {
       console.error("[DEBUG] Error fetching requests:", error);
+      setLocalFallbackError(error.message);
       // Fallback
       console.warn("[DEBUG] Falling back to local storage due to Firestore error...");
       const localRequestsStr = localStorage.getItem("requests") || "[]";
@@ -145,6 +147,17 @@ export default function RequestPage() {
 
       {/* Main Body */}
       <main className="max-w-4xl mx-auto px-4">
+        {localFallbackError && (
+          <div className="mb-6 p-4 rounded border bg-amber-100 border-amber-200 text-amber-800 text-sm">
+            <p className="font-bold mb-1">⚠️ Firebase Offline Fallback Mode Active</p>
+            <p className="text-xs">
+              The application failed to fetch requests from the real Firestore database and is currently reading/writing locally from your browser storage.
+            </p>
+            <p className="text-xs mt-1 font-semibold">
+              Error details: {localFallbackError}
+            </p>
+          </div>
+        )}
         {/* Simple Filters */}
         <section className="bg-white border border-gray-200 p-4 rounded-lg flex flex-col md:flex-row gap-4 mb-8 shadow-sm">
           <div className="flex-1">

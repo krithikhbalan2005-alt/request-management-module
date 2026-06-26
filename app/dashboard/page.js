@@ -90,7 +90,7 @@ export default function Dashboard() {
       const localRequests = JSON.parse(localRequestsStr);
       localRequests.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
       setRequests(localRequests);
-      showNotification("Using local data storage fallback.", "warning");
+      showNotification("Using local data storage fallback. Error: " + error.message, "warning");
     } finally {
       setLoading(false);
     }
@@ -197,7 +197,7 @@ export default function Dashboard() {
       setDescription("");
       setTopics("");
       fetchRequests();
-      showNotification("Saved to local storage fallback.", "warning");
+      showNotification("Saved to local storage fallback. Error: " + error.message, "warning");
     } finally {
       setLoading(false);
     }
