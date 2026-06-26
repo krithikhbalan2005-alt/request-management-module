@@ -48,6 +48,19 @@ export default function SignupPage() {
       console.error("Signup error:", err);
       if (err.code === "auth/api-key-not-valid" || err.code === "auth/invalid-api-key") {
         // Mock signup success
+        const localUsersStr = localStorage.getItem("mockUsers") || "[]";
+        const localUsers = JSON.parse(localUsersStr);
+        const emailExists = localUsers.some((u) => u.email.toLowerCase() === email.trim().toLowerCase());
+
+        if (emailExists) {
+          setError("This email address is already in use.");
+          setLoading(false);
+          return;
+        }
+
+        localUsers.push({ email: email.trim(), password: password });
+        localStorage.setItem("mockUsers", JSON.stringify(localUsers));
+
         setSuccess(true);
         setTimeout(() => {
           router.push("/login");

@@ -36,12 +36,25 @@ export default function LoginPage() {
       
       // Graceful error mapping and mock fallback for demo purposes
       if (err.code === "auth/api-key-not-valid" || err.code === "auth/invalid-api-key") {
-        if (password.length >= 6) {
+        if (password.length < 6) {
+          setError("Password should be at least 6 characters.");
+          setLoading(false);
+          return;
+        }
+
+        const localUsersStr = localStorage.getItem("mockUsers") || "[]";
+        const localUsers = JSON.parse(localUsersStr);
+        const matchedUser = localUsers.find(
+          (u) => u.email.toLowerCase() === email.trim().toLowerCase() && u.password === password
+        );
+
+        if (matchedUser) {
           sessionStorage.setItem("mockUser", JSON.stringify({ email: email.trim() }));
           router.push("/dashboard");
           return;
         } else {
-          setError("Password should be at least 6 characters.");
+          setError("Invalid email or password. Please try again.");
+          setLoading(false);
           return;
         }
       }
